@@ -32,8 +32,8 @@ jobs:
           with:
               vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
         
-        - name: check the stamp file
-          run: cmake -S . --preset=ALL --check-stamp-file "build\CMakeFiles\generate.stamp"
+        # - name: check the stamp file
+        #   run: cmake -S . --preset=ALL --check-stamp-file "build\CMakeFiles\generate.stamp"
         
         - name: run cmake to build
           run: cmake --build build --config Release
