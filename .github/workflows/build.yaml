@@ -50,7 +50,7 @@ jobs:
         shell: bash
         run: |
             # steps.filter.ouputs.features_files contains changed files
-            let mods=$(cut -d/ -f3 ${{ steps.filter.outputs.features_files }})
+            mods=$(cut -d/ -f3 ${{ steps.filter.outputs.features_files }})
             echo $mods
 
   # the windows runners are slow, so we minimize what we run on them
