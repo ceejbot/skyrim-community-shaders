@@ -9,6 +9,8 @@
 #include <wrl\client.h>
 #include <wrl\wrappers\corewrappers.h>
 
+// comment change
+
 template <typename T>
 D3D11_BUFFER_DESC StructuredBufferDesc(uint64_t count, bool uav = true, bool dynamic = false)
 {

@@ -6,6 +6,7 @@
 // https://bartwronski.files.wordpress.com/2014/03/ac4_gdc.pdf
 // https://www.artstation.com/blogs/andreariccardi/3VPo/a-new-approach-for-parallax-mapping-presenting-the-contact-refinement-parallax-mapping-technique
 
+// comment change
 float linearstep(float edge0, float edge1, float x)
 {
 	return saturate((x - edge0) / (edge1 - edge0));
