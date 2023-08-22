@@ -1,25 +1,70 @@
-name: build Community Shaders for dist
+name: build Community Shaders for distribution
 on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'main'
   workflow_dispatch:
 permissions:
   contents: write
 
 env:
   VCPKG_COMMIT_ID: 9edb1b8e590cc086563301d735cae4b6e732d2d2
-  CMAKE_BUILD_TYPE: Release
 
 jobs:
-  compile:
+  changes:
+    name: what changed?
+    runs-on: ubuntu-latest
+    outputs:
+      plugin: ${{ steps.plugin.outputs.plugin }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          base: 'main'
+          filters: |
+            features:
+              - 'features/**'
+            plugin:
+              - 'include/**'
+              - 'package/**'
+              - 'src/**'
+      - id: plugin
+        run: echo "plugin=${{ steps.filter.outputs.plugin }}" >> "$GITHUB_OUTPUT"
+      
+      - name: create a release for this push
+        if: steps.filter.outputs.features == 'true' || steps.filter.outputs.plugin == 'true'
+        uses: ncipollo/release-action@v1
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag: ${{ github.ref_name }}
+          name: Community Shaders ${{ github.ref_name }}
+          draft: true
+          allowUpdates: true
+
+      - name: identify changed features
+        if: steps.filter.outputs.features == 'true'
+        shell: bash
+        run: |
+            # steps.filter.ouputs.features_files contains changed files
+            for $i in ${{ steps.filter.outputs.features_files }}; do
+              echo $i
+            done
+  
+  # the windows runners are slow, so we minimize what we run on them
+  plugin:
+    if: ${{ needs.changes.outputs.plugin }}
+    needs: [changes]
     name: build plugin
     runs-on: windows-latest
     steps:
         - uses: actions/checkout@v3
           with:
             submodules: 'true'
-  
+
         - uses: actions/cache@v3
           with:
               path: |
@@ -28,16 +73,16 @@ jobs:
               restore-keys: |
                 ${{ runner.os }}-cmake-
                 ${{ runner.os }}-
-                  
+
         - uses: ilammy/msvc-dev-cmd@v1.10.0
 
         - uses: lukka/run-vcpkg@v11
           with:
               vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
-        
+
         - name: check the stamp file
           run: cmake -S . --preset=ALL --check-stamp-file "build\CMakeFiles\generate.stamp"
-        
+
         - name: run cmake to build
           run: cmake --build build --config Release
 
@@ -57,7 +102,8 @@ jobs:
           env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            name: Community Shaders ${{ github.ref_name }}
             tag: ${{ github.ref_name }}
-            draft: true
+            allowUpdates: true
+            omitDraftDuringUpdate: true
+            omitNameDuringUpdate: true
             artifacts: "CommunityShaders_${{ github.ref_name }}.7z"
