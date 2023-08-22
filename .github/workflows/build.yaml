@@ -33,7 +33,7 @@ jobs:
               - 'src/**'
       - id: plugin
         run: echo "plugin=${{ steps.filter.outputs.plugin }}" >> "$GITHUB_OUTPUT"
-      
+
       - name: create a release for this push
         if: steps.filter.outputs.features == 'true' || steps.filter.outputs.plugin == 'true'
         uses: ncipollo/release-action@v1
@@ -50,10 +50,10 @@ jobs:
         shell: bash
         run: |
             # steps.filter.ouputs.features_files contains changed files
-            for $i in ${{ steps.filter.outputs.features_files }}; do
+            for i in ${{ steps.filter.outputs.features_files }}; do
               echo $i
             done
-  
+
   # the windows runners are slow, so we minimize what we run on them
   plugin:
     if: ${{ needs.changes.outputs.plugin }}
