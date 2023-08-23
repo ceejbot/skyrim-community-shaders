@@ -34,6 +34,22 @@ jobs:
       - id: plugin
         run: echo "plugin=${{ steps.filter.outputs.plugin }}" >> "$GITHUB_OUTPUT"
 
+      - name: create archives for changed features
+        id: changed
+        if: steps.filter.outputs.features == 'true'
+        shell: bash
+        run: |
+            # steps.filter.ouputs.features_files contains changed files
+            mods=$(cut -d/ -f3 ${{ steps.filter.outputs.features_files }})
+            cd features
+            results=()
+            for m in $mods; do
+              echo "$m"
+              7z a "$m ${{ github.ref_name }}.7z" "$m"
+              results+=("$m ${{ github.ref_name }}.7z")
+            done
+            echo "mods=$results" >> "$GITHUB_OUTPUT"
+
       - name: create a release for this push
         if: steps.filter.outputs.features == 'true' || steps.filter.outputs.plugin == 'true'
         uses: ncipollo/release-action@v1
@@ -45,13 +61,17 @@ jobs:
           draft: true
           allowUpdates: true
 
-      - name: identify changed features
+      - name: upload shader set mod files
         if: steps.filter.outputs.features == 'true'
-        shell: bash
-        run: |
-            # steps.filter.ouputs.features_files contains changed files
-            mods=$(cut -d/ -f3 ${{ steps.filter.outputs.features_files }})
-            echo $mods
+        uses: ncipollo/release-action@v1
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag: ${{ github.ref_name }}
+          omitDraftDuringUpdate: true
+          omitNameDuringUpdate: true
+          artifacts: ${{ steps.changed.outputs.mods }}
+
 
   # the windows runners are slow, so we minimize what we run on them
   plugin:
@@ -96,13 +116,12 @@ jobs:
         - name: 7zip compress it
           run: 7z a "CommunityShaders_${{ github.ref_name }}.7z" ./CommunityShaders
 
-        - name: create a tagged release and upload the archive
+        - name: upload plugin archive
           uses: ncipollo/release-action@v1
           env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
             tag: ${{ github.ref_name }}
-            allowUpdates: true
             omitDraftDuringUpdate: true
             omitNameDuringUpdate: true
             artifacts: "CommunityShaders_${{ github.ref_name }}.7z"
