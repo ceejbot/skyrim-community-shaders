@@ -34,6 +34,17 @@ jobs:
       - id: plugin
         run: echo "plugin=${{ steps.filter.outputs.plugin }}" >> "$GITHUB_OUTPUT"
 
+      - name: create a release for this push
+        if: steps.filter.outputs.features == 'true' || steps.filter.outputs.plugin == 'true'
+        uses: ncipollo/release-action@v1
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag: ${{ github.ref_name }}
+          name: Community Shaders ${{ github.ref_name }}
+          draft: true
+          allowUpdates: true
+
       - name: create archives for changed features
         id: changed
         if: steps.filter.outputs.features == 'true'
@@ -50,17 +61,6 @@ jobs:
             done
             echo "mods=$results" >> "$GITHUB_OUTPUT"
 
-      - name: create a release for this push
-        if: steps.filter.outputs.features == 'true' || steps.filter.outputs.plugin == 'true'
-        uses: ncipollo/release-action@v1
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag: ${{ github.ref_name }}
-          name: Community Shaders ${{ github.ref_name }}
-          draft: true
-          allowUpdates: true
-
       - name: upload shader set mod files
         if: steps.filter.outputs.features == 'true'
         uses: ncipollo/release-action@v1
@@ -68,6 +68,7 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag: ${{ github.ref_name }}
+          allowUpdates: true
           omitDraftDuringUpdate: true
           omitNameDuringUpdate: true
           artifacts: ${{ steps.changed.outputs.mods }}
@@ -122,6 +123,7 @@ jobs:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
             tag: ${{ github.ref_name }}
+            allowUpdates: true
             omitDraftDuringUpdate: true
             omitNameDuringUpdate: true
             artifacts: "CommunityShaders_${{ github.ref_name }}.7z"
